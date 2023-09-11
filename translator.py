@@ -116,6 +116,10 @@ def main():
         output_file = "translated_speech.mp3"
         convert_text_to_speech(translated_text, output_file, language=target_language_code)
 
+          # Play the generated speech
+        audio_file = open(output_file, 'rb')
+        st.audio(audio_file.read(), format='audio/mp3')
+
         # Play the generated speech (platform-dependent)
         if os.name == 'posix':  # For Unix/Linux
             os.system(f"xdg-open {output_file}")
@@ -125,7 +129,7 @@ def main():
             st.warning("Unsupported operating system")
 
         # Provide download link for the MP3 file
-        st.markdown(get_binary_file_downloader_html("Download MP3", output_file, 'audio/mp3'), unsafe_allow_html=True)
+        st.markdown(get_binary_file_downloader_html("Download Audio File", output_file, 'audio/mp3'), unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
