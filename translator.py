@@ -93,7 +93,7 @@ def get_binary_file_downloader_html(link_text, file_path, file_format):
 
 def main():
     st.image("jangirii.png", width=50)
-    st.title("Text Translation and Conversion to speech")
+    st.title("Text Translation and Conversion to speech (English - other languages)")
     
     # Get user input
     text = st.text_area("Enter text to translate and convert to speech:")
