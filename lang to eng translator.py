@@ -1,100 +1,131 @@
 import streamlit as st
-from langdetect import detect
-import mtranslate
-import requests
+from translate import Translator
+from gtts import gTTS
+import os
+import base64
 
-# Set up the Telegram bot token
-TOKEN = '6260901632:AAHGkEyHuhMMq9i5E4TR_xqUmOS23qpI0cQ'
+# Define the language mapping
+language_mapping = {
+    "en": "English",
+    "es": "Spanish",
+    "fr": "French",
+    "de": "German",
+    "it": "Italian",
+    "pt": "Portuguese",
+    "nl": "Dutch",
+    "hi": "Hindi",
+    "ja": "Japanese",
+    "ko": "Korean",
+    "zh-cn": "Simplified Chinese",
+    "ru": "Russian",
+    "ar": "Arabic",
+    "th": "Thai",
+    "tr": "Turkish",
+    "pl": "Polish",
+    "cs": "Czech",
+    "sv": "Swedish",
+    "da": "Danish",
+    "fi": "Finnish",
+    "el": "Greek",
+    "hu": "Hungarian",
+    "uk": "Ukrainian",
+    "no": "Norwegian",
+    "id": "Indonesian",
+    "vi": "Vietnamese",
+    "ro": "Romanian",
+    "bn": "Bengali",
+    "fa": "Persian",
+    "iw": "Hebrew",
+    "bg": "Bulgarian",
+    "ca": "Catalan",
+    "hr": "Croatian",
+    "sr": "Serbian",
+    "sk": "Slovak",
+    "sl": "Slovenian",
+    "lt": "Lithuanian",
+    "lv": "Latvian",
+    "et": "Estonian",
+    "is": "Icelandic",
+    "ga": "Irish",
+    "sq": "Albanian",
+    "mk": "Macedonian",
+    "hy": "Armenian",
+    "ka": "Georgian",
+    "mt": "Maltese",
+    "mr": "Marathi",
+    "ta": "Tamil",
+    "te": "Telugu",
+    "ur": "Urdu",
+    "ne": "Nepali",
+    "si": "Sinhala",
+    "km": "Khmer",
+    "lo": "Lao",
+    "my": "Burmese",
+    "jw": "Javanese",
+    "mn": "Mongolian",
+    "zu": "Zulu",
+    "xh": "Xhosa"
+}
 
-# Process incoming message
-def process_message(update):
-    # Get chat ID from the incoming message
-    chat_id = update['message']['chat']['id']
+# Function to translate text
+def translate_text(text, target_language):
+    if target_language in language_mapping:
+        translator = Translator(to_lang=target_language)
+        translation = translator.translate(text)
+        return translation
+    else:
+        return "Language not found in the mapping"
 
-    # Ask for the language to translate to
-    send_message(chat_id, 'Im a chatbot which can translate text of any language to English. Enter your text:')
-
-# Process incoming message with language to translate
-def process_language(update):
-    # Get the language code from the incoming message
-    language_code = update['message']['text']
-
-    # Ask for the text to translate
-    send_message(chat_id_translation, 'Enter the text to translate:')
-
-    # Store the language code for later use
-    st.session_state.language_code_translation = language_code
-
-# Process incoming message with text to translate
-def process_text(update):
-    # Get the text from the incoming message
-    text = update['message']['text']
-
-    # Detect the language of the text
-    detected_language = detect(text)
-
-    # Translate the text to the selected language
-    translated_text = mtranslate.translate(text, to_language=st.session_state.language_code_translation, from_language=detected_language)
-
-    # Send the translated text as a reply
-    send_message(update['message']['chat']['id'], f"Detected Language: {detected_language}\nTranslated Text ({st.session_state.language_code_translation}): {translated_text}")
-
-# Send message via Telegram API
-def send_message(chat_id, text):
-    params = {
-        'chat_id': chat_id,
-        'text': text
-    }
-    response = requests.get(SEND_MESSAGE_URL, params=params)
-
-# Set up the Streamlit app
-def app():
-    st.title("Telegram Chatbot Translator")
-    st.write("Enter your text and select the language to translate.")
-
-    # Process incoming message
-    if 'update' in st.session_state:
-        update = st.session_state.update
-
-        if 'message' in update and 'text' in update['message']:
-            if 'entities' in update['message'] and update['message']['entities'][0]['type'] == 'bot_command':
-                process_message(update)
-            elif update['message']['chat']['id'] == st.session_state.chat_id_translation:
-                if 'language_code_translation' not in st.session_state:
-                    process_language(update)
-                else:
-                    process_text(update)
-
-    # Get text from the user
-    text = st.text_input("Enter the text to translate:")
-
-    # Send the message to the bot
+# Function to convert text to speech and save as an MP3 file
+def convert_text_to_speech(text, output_file, language='en'):
     if text:
-        chat_id = st.session_state.chat_id_translation if 'chat_id_translation' in st.session_state else None
-        if not chat_id:
-            params = {
-                'chat_id': 'YOUR_CHAT_ID',  # Replace with your chat ID
-                'text': text
-            }
-            response = requests.get(SEND_MESSAGE_URL, params=params)
+        tts = gTTS(text=text, lang=language)
+        tts.save(output_file)
+    else:
+        st.warning("No text to speak")
+
+def get_binary_file_downloader_html(link_text, file_path, file_format):
+    with open(file_path, 'rb') as f:
+        file_data = f.read()
+    b64_file = base64.b64encode(file_data).decode()
+    download_link = f'<a href="data:{file_format};base64,{b64_file}" download="{os.path.basename(file_path)}">{link_text}</a>'
+    return download_link
+
+def main():
+    st.title("Text Translation and Speech Conversion")
+
+    # Get user input
+    text = st.text_area("Enter text to translate and convert to speech:")
+    target_language = st.selectbox("Select target language:", list(language_mapping.values()))
+
+    # Check if the target language is in the mapping
+    target_language_code = [code for code, lang in language_mapping.items() if lang == target_language][0]
+
+    # Translate the input text
+    translated_text = translate_text(text, target_language_code)
+
+    # Display translated text
+    if translated_text:
+        st.subheader(f"Translated text ({target_language}):")
+        st.write(translated_text)
+    else:
+        st.warning("Translation result is empty. Please check your input text.")
+
+    # Convert the translated text to speech
+    if st.button("Convert to Speech"):
+        output_file = "translated_speech.mp3"
+        convert_text_to_speech(translated_text, output_file, language=target_language_code)
+
+        # Play the generated speech (platform-dependent)
+        if os.name == 'posix':  # For Unix/Linux
+            os.system(f"xdg-open {output_file}")
+        elif os.name == 'nt':  # For Windows
+            os.system(f"start {output_file}")
         else:
-            detected_language = detect(text)
-            translated_text = mtranslate.translate(text, to_language=st.session_state.language_code_translation, from_language=detected_language)
-            st.write(f"Detected Language: {detected_language}")
-            st.write(f"Translated Text ({st.session_state.language_code_translation}): {translated_text}")
+            st.warning("Unsupported operating system")
 
-# Continuously poll for new updates
-def poll_updates():
-    offset = None
+        # Provide download link for the MP3 file
+        st.markdown(get_binary_file_downloader_html("Download MP3", output_file, 'audio/mp3'), unsafe_allow_html=True)
 
-    while True:
-        response = requests.post(f'{API_URL}getUpdates', json={'offset': offset})
-        data = response.json()
-        if 'result' in data:
-            updates = data['result']
-            for update in updates:
-                st.session_state.update = update
-                offset = update['update_id'] + 1
-
-# Start polling for updates
-poll_updates()
+if __name__ == "__main__":
+    main()
