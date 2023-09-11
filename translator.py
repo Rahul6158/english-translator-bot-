@@ -92,8 +92,7 @@ def get_binary_file_downloader_html(link_text, file_path, file_format):
     return download_link
 
 def main():
-    st.image("header.jpg", width=100)
-    st.title("Text Translation and Speech Conversion")
+    st.image("header.jpg", width=500)
 
     # Get user input
     text = st.text_area("Enter text to translate and convert to speech:")
