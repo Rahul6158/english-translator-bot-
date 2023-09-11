@@ -1,4 +1,8 @@
-deep_translator 
-langdetect 
-mtranslate
-requests
+gtts
+pyttsx3
+pyTelegramBotAPI
+python-telegram-bot
+streamlit
+pillow
+translate
+googletrans==4.0.0-rc1
